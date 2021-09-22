@@ -21,10 +21,11 @@ import logging
 
 from PyQt5 import QtWidgets
 from friture.audiobackend import SAMPLING_RATE
+import friture.plotting.frequency_scales as fscales
 
 # shared with spectrum_settings.py
 DEFAULT_FFT_SIZE = 8  # 8192 points
-DEFAULT_FREQ_SCALE = 1  # log10
+DEFAULT_FREQ_SCALE = 2  # Mel
 DEFAULT_MAXFREQ = 20000
 DEFAULT_MINFREQ = 20
 DEFAULT_SPEC_MIN = -100
@@ -68,8 +69,8 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
 
         self.comboBox_freqscale = QtWidgets.QComboBox(self)
         self.comboBox_freqscale.setObjectName("comboBox_freqscale")
-        self.comboBox_freqscale.addItem("Linear")
-        self.comboBox_freqscale.addItem("Logarithmic")
+        for scale in fscales.ALL:
+            self.comboBox_freqscale.addItem(scale.NAME)
         self.comboBox_freqscale.setCurrentIndex(DEFAULT_FREQ_SCALE)
 
         self.spinBox_minfreq = QtWidgets.QSpinBox(self)
@@ -164,11 +165,8 @@ class Spectrum_Settings_Dialog(QtWidgets.QDialog):
 
     # slot
     def freqscalechanged(self, index):
-        self.logger.info("freq_scale slot %d", index)
-        if index == 1:
-            self.parent().PlotZoneSpect.setlogfreqscale()
-        else:
-            self.parent().PlotZoneSpect.setlinfreqscale()
+        self.logger.info("freq_scale slot %d %s", index, fscales.ALL[index].NAME)
+        self.parent().PlotZoneSpect.setfreqscale(fscales.ALL[index])
 
     # slot
     def responsetimechanged(self, index):

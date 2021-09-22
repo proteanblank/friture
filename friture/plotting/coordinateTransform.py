@@ -18,9 +18,9 @@
 # along with Friture.  If not, see <http://www.gnu.org/licenses/>.
 
 import numpy as np
+import friture.plotting.frequency_scales as fscales 
 
 # transforms between screen coordinates and plot coordinates
-
 
 class CoordinateTransform(object):
 
@@ -36,7 +36,7 @@ class CoordinateTransform(object):
         self.length = length
         self.startBorder = startBorder
         self.endBorder = endBorder
-        self.log = False
+        self.scale = fscales.Linear
 
     def setRange(self, coord_min, coord_max):
         self.coord_min = coord_min
@@ -52,14 +52,11 @@ class CoordinateTransform(object):
         self.startBorder = start
         self.endBorder = end
 
-    def setLinear(self):
-        self.log = False
-
-    def setLogarithmic(self):
-        self.log = True
+    def setScale(self, scale):
+        self.scale = scale
 
     def toScreen(self, x):
-        if self.log:
+        if self.scale is fscales.Logarithmic:
             if self.coord_clipped_min == self.coord_clipped_max:
                 return self.startBorder + 0. * x  # keep x type (this can produce a RunTimeWarning if x contains inf)
 
@@ -68,14 +65,22 @@ class CoordinateTransform(object):
         else:
             if self.coord_max == self.coord_min:
                 return self.startBorder + 0. * x  # keep x type (this can produce a RunTimeWarning if x contains inf)
+            
+            trans_x = self.scale.transform(x)
+            trans_min = self.scale.transform(self.coord_min)
+            trans_max = self.scale.transform(self.coord_max)
 
-            return (x - self.coord_min) * (self.length - self.startBorder - self.endBorder) / (self.coord_max - self.coord_min) + self.startBorder
+            return (trans_x - trans_min) * (self.length - self.startBorder - self.endBorder) / (trans_max - trans_min) + self.startBorder
 
     def toPlot(self, x):
         if self.length == self.startBorder + self.endBorder:
             return self.coord_min + 0. * x  # keep x type (this can produce a RunTimeWarning if x contains inf)
 
-        if self.log:
+        if self.scale is fscales.Logarithmic:
             return 10 ** ((x - self.startBorder) * self.coord_ratio_log / (self.length - self.startBorder - self.endBorder)) * self.coord_min
         else:
-            return (x - self.startBorder) * (self.coord_max - self.coord_min) / (self.length - self.startBorder - self.endBorder) + self.coord_min
+            trans_min = self.scale.transform(self.coord_min)
+            trans_max = self.scale.transform(self.coord_max)
+
+            trans_x = (x - self.startBorder) * (trans_max - trans_min) / (self.length - self.startBorder - self.endBorder) + trans_min
+            return self.scale.inverse(trans_x)

@@ -74,16 +74,9 @@ class SpectrumPlotWidget(QtWidgets.QWidget):
 
         self.setLayout(plotLayout)
 
-    def setlinfreqscale(self):
-        self.horizontalScaleTransform.setLinear()
-        self.horizontalScaleDivision.setLinear()
-
-        self.needtransform = True
-        self.draw()
-
-    def setlogfreqscale(self):
-        self.horizontalScaleTransform.setLogarithmic()
-        self.horizontalScaleDivision.setLogarithmic()
+    def setfreqscale(self, scale):
+        self.horizontalScaleTransform.setScale(scale)
+        self.horizontalScaleDivision.setScale(scale)
 
         self.needtransform = True
         self.draw()

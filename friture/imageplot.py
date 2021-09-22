@@ -28,6 +28,7 @@ from friture.plotting.scaleWidget import VerticalScaleWidget, HorizontalScaleWid
 from friture.plotting.scaleDivision import ScaleDivision
 from friture.plotting.coordinateTransform import CoordinateTransform
 from friture.plotting.canvasWidget import CanvasWidget
+import friture.plotting.frequency_scales as fscales
 
 
 def tickFormatter(value, digits):
@@ -60,8 +61,8 @@ class PlotImage:
 
         self.last_time = 0.
 
-    def addData(self, freq, xyzs, logfreqscale, last_data_time):
-        self.frequency_resampler.setlogfreqscale(logfreqscale)
+    def addData(self, freq, xyzs, freqscale, last_data_time):
+        self.frequency_resampler.setfreqscale(freqscale)
 
         # Note: both the frequency and the time resampler work
         # only on 1D arrays, so we loop on the columns of data.
@@ -156,8 +157,8 @@ class PlotImage:
     def set_sfft_rate(self, rate_frac):
         self.sfft_rate_frac = rate_frac
 
-    def setlogfreqscale(self, logfreqscale):
-        self.frequency_resampler.setlogfreqscale(logfreqscale)
+    def setfreqscale(self, scale):
+        self.frequency_resampler.setfreqscale(scale)
 
     def erase(self):
         self.canvasscaledspectrogram.erase()
@@ -213,7 +214,7 @@ class ImagePlot(QtWidgets.QWidget):
         self.plotImage = PlotImage()
         self.canvasWidget.attach(self.plotImage)
 
-        self.setlinfreqscale()
+        self.setfreqscale(fscales.Linear)
 
         self.setspecrange(-140., 0.)
 
@@ -221,7 +222,7 @@ class ImagePlot(QtWidgets.QWidget):
         self.update()
 
     def addData(self, freq, xyzs, last_data_time):
-        self.plotImage.addData(freq, xyzs, self.logfreqscale, last_data_time)
+        self.plotImage.addData(freq, xyzs, self.freqscale, last_data_time)
 
     def draw(self):
         if self.needfullreplot:
@@ -261,27 +262,14 @@ class ImagePlot(QtWidgets.QWidget):
     def restart(self):
         self.plotImage.restart()
 
-    def setlinfreqscale(self):
+    def setfreqscale(self, scale):
+        self.freqscale = scale
+        
         self.plotImage.erase()
-        self.logfreqscale = 0
-        self.plotImage.setlogfreqscale(False)
+        self.plotImage.setfreqscale(scale)
 
-        self.verticalScaleTransform.setLinear()
-        self.verticalScaleDivision.setLinear()
-
-        # notify that sizeHint has changed (this should be done with a signal emitted from the scale division to the scale bar)
-        self.verticalScale.scaleBar.updateGeometry()
-
-        self.needfullreplot = True
-        self.update()
-
-    def setlog10freqscale(self):
-        self.plotImage.erase()
-        self.logfreqscale = 1
-        self.plotImage.setlogfreqscale(True)
-
-        self.verticalScaleTransform.setLogarithmic()
-        self.verticalScaleDivision.setLogarithmic()
+        self.verticalScaleTransform.setScale(scale)
+        self.verticalScaleDivision.setScale(scale)
 
         # notify that sizeHint has changed (this should be done with a signal emitted from the scale division to the scale bar)
         self.verticalScale.scaleBar.updateGeometry()
